@@ -5,7 +5,6 @@ import mongoose from "mongoose";
 
 dotenv.config();
 const app = express()
-const port = process.env.PORT;
 const MONGOURL = process.env.MONGO_URL;
 app.use(express.json())
 
@@ -24,7 +23,10 @@ const JobSchema = new mongoose.Schema({
 
 const connectDB = async()=>{
     try{
-        await mongoose.connect(MONGOURL);
+        await mongoose.connect(MONGOURL,  {
+            useNewUrlParser: true,
+            useUnifiedTopology: true,
+        });
         console.log("✅ database is connected successfully")
     }catch(err){
         console.log("❌ database is failed to connect")
@@ -60,5 +62,5 @@ app.post('/jobs',async(req,res)=>{
 })
 
 
-
-app.listen(3000,()=>console.log("listening on localhost:3000"))
+const port = process.env.PORT || 3000;
+app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
