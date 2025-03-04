@@ -69,6 +69,9 @@ app.delete("/jobs/:id", async (req, res) => {
 app.post("/jobs",validator(InputSchema) , async (req, res) => {
         const newJob = await Job.create(req.body)
         res.json({message:"job is posted successfully ",job:newJob})
+        if(!newJob){
+            res.json({message:"failed to fetch the data"})
+        }
 });
 
 const port = process.env.PORT || 3000;
