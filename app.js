@@ -36,11 +36,8 @@ const jobs = mongoose.model("jobs", JobSchema)
 
 connectDB();
 
-app.get('/',(req,res)=>{
-    res.send("Working...")
-})
 
-app.get('/jobs',async(req,res)=>{
+app.get('/',async(req,res)=>{
     const job = await jobs.find()
     res.json(job)
 })
