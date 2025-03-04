@@ -1,15 +1,22 @@
 import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+import { InputSchema } from "./zod.js";
 
 dotenv.config();
 const app = express();
 const MONGOURL = process.env.MONGO_URL;
 
-// Middleware
 app.use(express.json());
 
-// Job Schema
+const validator = (schema) => (req,res,next)=>{
+    const result = schema.safeParse(req.body)
+    if(!result.success){
+        return res.status(400).json({errors:result.error.format()})
+    };
+    next();
+}
+
 const JobSchema = new mongoose.Schema({
     title: String,
     type: String,
@@ -25,7 +32,6 @@ const JobSchema = new mongoose.Schema({
 
 const Job = mongoose.model("Job", JobSchema);
 
-// Database Connection with Error Handling
 const connectDB = async () => {
     try {
         await mongoose.connect(MONGOURL, {
@@ -35,60 +41,35 @@ const connectDB = async () => {
         console.log("✅ Database connected successfully");
     } catch (err) {
         console.error("❌ Database connection failed:", err);
-        setTimeout(connectDB, 5000); // Retry after 5 seconds
+        setTimeout(connectDB, 5000);
     }
 };
 
 connectDB();
 
-// Routes
-app.get("/", (req, res) => {
+app.get("/",validator(InputSchema) , (req, res) => {
     res.json({ message: "Working..." });
 });
 
-// ✅ Get all jobs
-app.get("/jobs", async (req, res) => {
-    try {
+app.get("/jobs",validator(InputSchema), async (req, res) => {
         const jobs = await Job.find();
         res.status(200).json(jobs);
-    } catch (err) {
-        res.status(500).json({ error: "Failed to fetch jobs" });
-    }
 });
 
-// ✅ Get a job by ID
-app.get("/jobs/:id", async (req, res) => {
-    try {
+app.get("/jobs/:id",validator(InputSchema), async (req, res) => {
         const job = await Job.findById(req.params.id);
-        if (!job) return res.status(404).json({ message: "Job not found" });
         res.status(200).json(job);
-    } catch (err) {
-        res.status(500).json({ error: "Invalid Job ID" });
-    }
 });
 
-// ✅ Delete a job by ID
-app.delete("/jobs/:id", async (req, res) => {
-    try {
+app.delete("/jobs/:id",validator(InputSchema), async (req, res) => {
         const deletedJob = await Job.findByIdAndDelete(req.params.id);
-        if (!deletedJob) return res.status(404).json({ message: "Job not found" });
         res.status(200).json({ message: "Job deleted successfully", deletedJob });
-    } catch (err) {
-        res.status(500).json({ error: "Error deleting job" });
-    }
 });
 
-// ✅ Create a new job
-app.post("/jobs", async (req, res) => {
-    try {
-        const newJob = new Job(req.body);
-        await newJob.save();
-        res.status(201).json({ message: "Job created successfully", job: newJob });
-    } catch (err) {
-        res.status(500).json({ error: "Error creating job" });
-    }
+app.post("/jobs",validator(InputSchema) , async (req, res) => {
+        const newJob = await Job.create(req.body)
+        res.json({message:"job is posted successfully ",job:newJob})
 });
 
-// Start server with correct PORT (for Render)
 const port = process.env.PORT || 3000;
 app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
