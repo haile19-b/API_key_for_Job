@@ -47,7 +47,7 @@ const connectDB = async () => {
 
 connectDB();
 
-app.get("/",validator(InputSchema) , (req, res) => {
+app.get("/", (req, res) => {
     res.json({ message: "Working..." });
 });
 
