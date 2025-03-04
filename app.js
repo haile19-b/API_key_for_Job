@@ -38,9 +38,9 @@ const connectDB = async () => {
             useNewUrlParser: true,
             useUnifiedTopology: true,
         });
-        console.log("✅ Database connected successfully");
+        console.log("Database connected successfully");
     } catch (err) {
-        console.error("❌ Database connection failed:", err);
+        console.error("Database connection failed:", err);
         setTimeout(connectDB, 5000);
     }
 };
@@ -51,17 +51,17 @@ app.get("/", (req, res) => {
     res.json({ message: "Working..." });
 });
 
-app.get("/jobs",validator(InputSchema), async (req, res) => {
+app.get("/jobs", async (req, res) => {
         const jobs = await Job.find();
         res.status(200).json(jobs);
 });
 
-app.get("/jobs/:id",validator(InputSchema), async (req, res) => {
+app.get("/jobs/:id", async (req, res) => {
         const job = await Job.findById(req.params.id);
         res.status(200).json(job);
 });
 
-app.delete("/jobs/:id",validator(InputSchema), async (req, res) => {
+app.delete("/jobs/:id", async (req, res) => {
         const deletedJob = await Job.findByIdAndDelete(req.params.id);
         res.status(200).json({ message: "Job deleted successfully", deletedJob });
 });
@@ -72,4 +72,4 @@ app.post("/jobs",validator(InputSchema) , async (req, res) => {
 });
 
 const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`🚀 Server running on port ${port}`));
+app.listen(port, () => console.log(`Server running on port ${port}`));
