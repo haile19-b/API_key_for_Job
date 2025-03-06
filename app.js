@@ -2,12 +2,15 @@ import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import { InputSchema } from "./zod.js";
+import cors from "cors";
+import { string } from "zod";
 
 dotenv.config();
 const app = express();
 const MONGOURL = process.env.MONGO_URL;
 
 app.use(express.json());
+app.use(cors());
 
 const validator = (schema) => (req,res,next)=>{
     const result = schema.safeParse(req.body)
@@ -20,7 +23,7 @@ const validator = (schema) => (req,res,next)=>{
 const JobSchema = new mongoose.Schema({
     title: String,
     type: String,
-    salary: Number,
+    salary: String,
     description: String,
     company: String,
     logo: String,
@@ -28,7 +31,7 @@ const JobSchema = new mongoose.Schema({
     location: String,
     experienceLevel: String,
     currency: String,
-});
+},{timestamps:true});
 
 const Job = mongoose.model("Job", JobSchema);
 
@@ -52,18 +55,46 @@ app.get("/", (req, res) => {
 });
 
 app.get("/jobs", async (req, res) => {
-        const jobs = await Job.find();
-        res.status(200).json(jobs);
+    try{
+        let {page = 1, limit = 2} = req.query
+        page = parseInt(page)
+        limit = parseInt(limit)
+        const total = await Job.countDocuments()
+        const jobs = await Job.find()
+        .sort({ createdAt:-1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
+        if(!jobs){
+            return res.status(404).json({message:"no item is found with this id"})
+        }
+        res.status(200).json({
+            total,
+            page,
+            limit,
+            jobs
+        });
+    }catch(err){
+        res.status(404).json(err)
+        process.exit(1)
+    }
 });
 
 app.get("/jobs/:id", async (req, res) => {
+    try{
         const job = await Job.findById(req.params.id);
         res.status(200).json(job);
+    }catch(err){
+        res.status(404).json({message:"there may be no item with this id ",err})
+    }
 });
 
 app.delete("/jobs/:id", async (req, res) => {
+    try{
         const deletedJob = await Job.findByIdAndDelete(req.params.id);
         res.status(200).json({ message: "Job deleted successfully", deletedJob });
+    }catch(err){
+        res.status(400).json({message:"there may be no item with this id ", err})
+    }
 });
 
 app.post("/jobs",validator(InputSchema) , async (req, res) => {
